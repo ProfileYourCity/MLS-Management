@@ -1,0 +1,154 @@
+<?php
+
+/**
+ * phRETSimg_GS: An adaptation for GetSimple CMS of the phRETSimg library for downloading and manipulating images via RETS.
+ * 
+ * phRETSimg provides the ability to generate image files using data from the 
+ * RETS system via the GD functions native to PHP. 
+ * 
+ * @author Jay Scott <jason@jasonpscott.com>
+ * 
+ * @version 0.1
+ * @since 0.1
+ * 
+ * @param int    $listing_ids      Records to select identified by mls_listing_id numbers.
+ * 
+ * TODO Add proper phpdoc stuff for attributes.
+ * TODO Harmonize the versions of this into one universal library.
+ */
+class MLSimg {
+    
+    /**
+     * Names of MLS systems to access.
+     * @var array
+     */
+    public $all_mls;
+    
+    /**
+     * Path for storing images.
+     * @var string
+     */
+    public $img_path;
+    
+    /**
+     * Path to keep log of successful runs.
+     * @var string 
+     */
+    public $activity_log_path;
+    
+    /**
+     * Path to keep error log.
+     * @var string 
+     */
+    public $error_log_path;
+    
+    /**
+     * RETS URL.
+     * @var string
+     */
+    public $rets_url;
+    
+    /**
+     * RETS username.
+     * @var string 
+     */
+    public $rets_user;
+    
+    /**
+     * RETS password.
+     * @var string
+     */
+    public $rets_pass;
+    
+    /**
+     * RETS version number.
+     * @var string
+     */
+    public $rets_version;
+    
+    /**
+     * Memory limit for PHP during runs.
+     * @var int
+     */
+    public $mem_limit;
+    
+    /**
+     * mls_listing_id numbers of recrods to select.
+     * @var mixed
+     */
+    public $listing_ids;
+    
+    /**
+     * Contains messages generating during execution.
+     * @var array 
+     */
+    public $messages = array();
+    
+    /**
+     * Set up.
+     * 
+     * @param mixed $listing_ids single or array of mls_listing_id numbers.
+     * 
+     * TODO Replace CI-specific stuff with GS-specific stuff.
+     * TODO Make sure connections only occur when methods that need them are
+     * called and close all connections when no longer needed.
+     */
+    function __construct($listing_ids = '')
+    {
+         // Make sure configuration file exists and set path, if so. // TODO Figure out if I need to check for config files anymore.
+
+            // Get credentials for RETS.
+            // TODO Change this so an instance is created for each MLS, rather than processing multiple MLS's in once object.
+            $mlsData = new mlsData;
+            $this->all_mls = $mlsData->getAllMLS();
+            
+            $this->rets_url      = $all_mls['retsurl'];
+            $this->rets_user     = $all_mls['retsuser'];
+            $this->rets_pass     = $all_mls['retspass'];
+            //$this->rets_version  = $all_mls['retsver']; TODO RETS version needs to be added to XML config files before this can be used.
+            $this->rets_version  = '1.7.2'; // REMOVE this after XML config provides RETS version.
+            
+            // Get DB settings.
+            $this->db_host       = $mlsData->getData('dbhost', true);
+            $this->db_user       = $mlsData->getData('dbuser', true);
+            $this->db_pass       = $mlsData->getData('dbpass', true);
+            $this->db_table      = $mlsData->getData('dbtable', true);
+
+            // Set paths for writing images and for logging.
+            $this->img_path = GSROOTPATH . $mlsData->getData('image_archive_path', true);
+            $this->placeholder_path = GSROOTPATH . $mlsData->getData('placeholder_image', true);
+            $this->activity_log_path = GSROOTPATH . $mlsData->getData('activity_log_path', true);
+            $this->error_log_path = GSROOTPATH . $mlsData->getData('error_log_path', true);
+            
+            //$this->img_path         = $CI->config->item('phretsimg_archive');
+            //$this->error_log_path   = $CI->config->item('phretsimg_error_log');
+            //$this->success_log_path = $CI->config->item('phretsimg_success_log');
+            
+            // Set miscellaneous class settings.
+            $this->mem_limit = $mlsData->getData('phRETSimg_mem_limit', true);
+            
+            // TODO Error handling could still be better.
+            // TODO Have these set message and return them instead of just croaking on the spot.
+            // Check that paths are set.
+            if ( empty($this->img_path) ) {
+                echo 'Error setting image path.';
+                die();
+            } elseif ( empty($this->error_log_path) ) {
+                echo 'Error setting error log path.';
+                die();
+            } elseif ( empty($this->activity_log_path) ) {
+                echo 'Error setting success log path.';
+                die();
+            } elseif ( empty($this->mem_limit) ) {
+                echo 'Problem setting PHP memory limit.';
+                die();
+            }
+                
+            // Set memory limit.
+            ini_set('memory_limit', $this->mem_limit);
+            
+            // Finally, get mls_listing_id numbers if passed in.
+            $this->listing_ids = $listing_ids;
+    }
+    
+}
