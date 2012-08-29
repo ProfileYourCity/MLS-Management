@@ -5,24 +5,20 @@ class rapattoniRets extends extractData
 {
 	public $dbh;
 
-  	public $columns_db = "mls_id,p_type,mls_state_id,mls_listing_id,tln_firm_id,mls_office_name,mls_office_phone,tln_realtor_id,mls_agent_name,mls_agent_phone,mls_agent_email,showing_phone,showing_appt,showing_instr,listing_date,property_type_code,community_type,building_design,building_desc,security,restrictions,pets,parking,lot_desc,construction,boat_access,remarks,status_code,foreclosure,short_sale,short_sale_comp,sale_price,original_price,sold_price,days_on_market,zoning_code,water_front_desc,water,view,full_address,street_number,street_name,street_type,street_direction,unit_number,longitude,latitude,city,zip_code,mls_area,county,subdivision,community_name,year_built,acres,building_square_footage,living_square_footage,price_per_sqft,bedrooms,baths_full,baths_half,total_rooms,school_elementary,school_middle,school_junior_high,school_high,hoa_fees,hoa_desc,owners_name,legal,apn,taxes,tax_year,section,`range`,township,master_bed,bed2,bed3,bed4,bed5,kitchen,laundry,den,dining,family,living,great,feature_codes,virtual_tour_url,photo_quantity,photo_url,photo_most_recent_date,avm,blogging,hoa_frequency,syndication";
-
-  	public $columns_rets = "State,ListingRid,ListingOfficeMLSID,ListingOfficeName,ListingOfficeNumber,ListingAgentMLSID,ListingAgentFullName,ListingAgentNumber,EntryDate,PropertyType,RESICOMT,Style,RESIREST,RESIPETS,RESIPARK,RESILOTD,RESICONS,RESIBWAC,MarketingRemarks,Status,RESIFREO,RESISSLE,ListingPrice,RESIZONE,RESIWTRD,RESIWATR,RESIVIEW,StreetNumber,StreetName,StreetSuffix,StreetPostDirection,Unit,Longitude,Latitude,City,ZipCode,Region,County,Subdivision,Area,YearBuilt,Acres,SquareFootage,PricePerSquareFoot,Bedrooms,Bathrooms,RESIHOAF,RESIHOD,LegalDescription,APN,RESITXYR,Section,Township,MasterBedroomDim,SecondBedroomDim,ThirdBedroomDim,FourthBedroomDim,FifthBedroomDim,KitchenDim,DenDim,DiningRoomDim,FamilyRoomDim,LivingRoomDim,GreatRoomDim,RESIINTF,VirtualTourURL,PictureCount,PictureModifiedDateTime,VOWAutomatedValuationDisplay,VOWConsumerComment,RESIHOFA";
-
 	public function __construct($db_name)
 	{
 		$this->db_name = $db_name;
 		//Connect to database
-		$this->dbh = $this->connectDB($db_name);
+		$this->dbh = $this->connectDB();
 	}
 	
 	//Function to allow conection to database
-	public function connectDB($db_name)
+	public function connectDB()
 	{
 
 		try 
 		{
-			$this->dbh = new PDO("mysql:host={$this->getData('dbhost')};dbname={$db_name}", $this->getData('dbuser'), $this->getData('dbpass'));
+			$this->dbh = new PDO("mysql:host={$this->getData('dbhost')};dbname={$this->db_name}", $this->getData('dbuser'), $this->getData('dbpass'));
 			$this->dbh->setAttribute( PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION );  
 			/*** return database handle ***/
 			return $this->dbh;
@@ -33,11 +29,11 @@ class rapattoniRets extends extractData
 		}
 	}
 
-	public function getRetsData($rets_url, $rets_user, $rets_pass, $rets_offset=300, $offset, $prop_type)
+	public function getRetsData($rets_url, $rets_user, $rets_pass, $rets_offset=300, $offset, $prop_type, $mls_num=null)
 	{
 		if($prop_type == 'sfr')
 		{
-			$getRets = $this->getSfrData($rets_url, $rets_user, $rets_pass, $rets_offset, $offset);
+			$getRets = $this->getSfrData($rets_url, $rets_user, $rets_pass, $rets_offset, $offset, $mls_num);
 		}
 
 		if($getRets == true)
@@ -50,7 +46,8 @@ class rapattoniRets extends extractData
 		}
 	}
 
-	public function getSfrData($rets_url, $rets_user, $rets_pass, $rets_offset, $offset)
+
+	public function getSfrData($rets_url, $rets_user, $rets_pass, $rets_offset, $offset, $mls_num)
 	{
 		try
 		{
@@ -66,12 +63,26 @@ class rapattoniRets extends extractData
 			$this->writeLogs(UPDATELOGPATH, $updateError);
 		}
 
+		//Connect To RETS Server
 		$rets = new phRETS; 
 		$rets->AddHeader("RETS-Version", "RETS/1.7.2");
 		$rets->AddHeader("User-Agent", "profile/1.7");
 		$connect = $rets->Connect($rets_url, $rets_user, $rets_pass);
-        $query = "(MLNumber=0+)";
-		$search = $rets->SearchQuery("Property", "RESI", $query, array("Select" => "State,ListingRid,ListingOfficeMLSID,ListingOfficeName,ListingOfficeNumber,ListingAgentMLSID,ListingAgentFullName,ListingAgentNumber,EntryDate,PropertyType,RESICOMT,Style,RESIREST,RESIPETS,RESIPARK,RESILOTD,RESICONS,RESIBWAC,MarketingRemarks,Status,RESIFREO,RESISSLE,ListingPrice,RESIZONE,RESIWTRD,RESIWATR,RESIVIEW,StreetNumber,StreetName,StreetSuffix,StreetPostDirection,Unit,Longitude,Latitude,City,ZipCode,Region,County,Subdivision,Area,YearBuilt,Acres,SquareFootage,PricePerSquareFoot,Bedrooms,Bathrooms,RESIHOAF,RESIHOD,LegalDescription,APN,RESITXYR,Section,Township,MasterBedroomDim,SecondBedroomDim,ThirdBedroomDim,FourthBedroomDim,FifthBedroomDim,KitchenDim,DenDim,DiningRoomDim,FamilyRoomDim,LivingRoomDim,GreatRoomDim,RESIINTF,VirtualTourURL,PictureCount,PictureModifiedDateTime ,VOWAutomatedValuationDisplay,VOWConsumerComment,RESIHOFA", "Limit" => $rets_offset, "Offset" => $offset));
+
+		//Get the "Update Increment" from mls management settings file & Query RETS server for properties that have been modified in the past x days
+		$select_date = (int) $this->getData('mlsImg_increm_update_days_ago');
+        $query_date = date ('Y-m-j', strtotime('-'.$select_date.' day', strtotime(date("Y-m-j"))));
+		if(is_null($mls_num))
+		{
+       		//$query = "(MLNumber=0+),(LastModifiedDateTime={$query_date}T03:28:04+)";
+       		$query = "(MLNumber=0+)";
+       	}
+		else
+		{
+       		$query = "(MLNumber={$mls_num})";
+       	}
+
+		$search = $rets->SearchQuery("Property", "RESI", $query, array("Select" => "State,MLNumber,ListingRid,ListingOfficeMLSID,ListingOfficeName,ListingOfficeNumber,ListingAgentMLSID,ListingAgentFullName,ListingAgentNumber,EntryDate,PropertyType,RESICOMT,Style,RESIREST,RESIPETS,RESIPARK,RESILOTD,RESICONS,RESIBWAC,MarketingRemarks,Status,RESIFREO,RESISSLE,ListingPrice,RESIZONE,RESIWTRD,RESIWATR,RESIVIEW,StreetNumber,StreetName,StreetSuffix,StreetPostDirection,Unit,Longitude,Latitude,City,ZipCode,Region,County,Subdivision,Area,YearBuilt,Acres,SquareFootage,PricePerSquareFoot,Bedrooms,Bathrooms,RESIHOAF,RESIHOD,LegalDescription,APN,RESITXYR,Section,Township,MasterBedroomDim,SecondBedroomDim,ThirdBedroomDim,FourthBedroomDim,FifthBedroomDim,KitchenDim,DenDim,DiningRoomDim,FamilyRoomDim,LivingRoomDim,GreatRoomDim,RESIINTF,VirtualTourURL,PictureCount,PictureModifiedDateTime,VOWAutomatedValuationDisplay,VOWConsumerComment,RESIHOFA,RESIFINI,ShowAddressToPublic,RESIPVSP,RESINGAR,RESIGARA,LastModifiedDateTime,RESITOTF,RESIKITC,RESIPVPL,RESIPOLD,RESIFLOR,RESIROOF,RESIAMEN,RESIINTF,RESIEXTF,RESIHEAT,RESICOOL,RESIDENN,RESIWIND", "Limit" => $rets_offset, "Offset" => $offset));
 		if($search)
 		{
 			$count = 0;
@@ -81,7 +92,8 @@ class rapattoniRets extends extractData
 			 	$db_mapping = array('mls_id' => '116', 
 			 		'p_type' => 'sfr',
 					'mls_state_id' => $listing['State'], 
-					'mls_listing_id' => $listing['ListingRid'], 
+					'mls_listing_id' => $listing['MLNumber'], 
+					'listing_rid' => $listing['ListingRid'], 
 					'tln_firm_id' => $listing['ListingOfficeMLSID'], 
 					'mls_office_name' => $listing['ListingOfficeName'], 
 					'mls_office_phone' => $listing['ListingOfficeNumber'], 
@@ -169,14 +181,32 @@ class rapattoniRets extends extractData
 					'feature_codes' => $listing['RESIINTF'], 
 					'virtual_tour_url' => $listing['VirtualTourURL'], 
 					'photo_quantity' => $listing['PictureCount'], 
-					'photo_url' => 'http://profileidx.com/photos/116/'.$listing['ListingRid'].'.jpg', 
+					'photo_url' => 'http://profileidx.com/photos/116/'.$listing['MLNumber'].'.jpg', 
 					'photo_most_recent_date' => $listing['PictureModifiedDateTime'], 
 					'avm' => $listing['VOWAutomatedValuationDisplay'], 
-					'blogging' => $listing['VOWConsumerComment'], 
 					'hoa_frequency' => $listing['RESIHOFA'], 
-					'syndication' => '');
+					'syndication' => '',
+					'furnished' => $listing['RESIFINI'],
+					'display_address' => $listing['ShowAddressToPublic'],
+					'spa_included' => $listing['RESIPVSP'],
+					'garage_desc' => $listing['RESIGARA'],
+					'garage_spaces' => $listing['RESINGAR'],
+					'windows' => $listing['RESIWIND'],
+					'date_last_transaction' => $listing['LastModifiedDateTime'],
+					'total_floors' => $listing['RESITOTF'],
+					'kitchen_desc' => $listing['RESIKITC'],
+					'pool' => $listing['RESIPVPL'],
+					'pool_desc' => $listing['RESIPOLD'],
+					'flooring' => $listing['RESIFLOR'],
+					'roof' => $listing['RESIROOF'],
+					'cooling' => $listing['RESICOOL'],
+					'heat' => $listing['RESIHEAT'],
+					'interior_features' => $listing['RESIINTF'],
+					'exterior_features' => $listing['RESIEXTF'],
+					'amenities' => $listing['RESIAMEN'],
+					'den_included' => $listing['RESIDENN']);
        				$is_array = true;
-
+       				//echo 'DATA<pre>'.print_r($db_mapping,true).'</pre>';
 	                try
 	                {
                        $db_mapping['listing_date'] = $this->RETSdatetimeToMySQL($db_mapping['listing_date']);
@@ -206,6 +236,12 @@ class rapattoniRets extends extractData
 			                $q = $this->dbh->prepare($sql);
 			                $attemt_addition = $q->execute(array_values($db_mapping));
 
+
+						    //Initiate coordinates update
+					    	$coord_sql = "UPDATE `sfr` SET `coordinates` = GEOMFROMTEXT('POINT(".$db_mapping['longitude']." ".$db_mapping['latitude'].")') WHERE `mls_listing_id`='{$db_mapping['mls_listing_id']}'";	
+					        $coord_q = $this->dbh->prepare($coord_sql);
+					        $attemt_coord_addition = $coord_q->execute();
+
 	                    	//Logs
 	                		$checkPropertyResult =  $count. ':SFR Property INSERT Success: '.$db_mapping['mls_listing_id']."\n";
 							$this->writeLogs(UPDATELOGPATH, $checkPropertyResult);
@@ -217,6 +253,11 @@ class rapattoniRets extends extractData
 	                		$sql = "UPDATE `sfr` SET ".$sql. " WHERE `mls_listing_id`='{$db_mapping['mls_listing_id']}'";
 			                $q = $this->dbh->prepare($sql);
 			                $attemt_addition = $q->execute();
+
+						    //Initiate coordinates update
+					    	$coord_sql = "UPDATE `sfr` SET `coordinates` = GEOMFROMTEXT('POINT(".$db_mapping['longitude']." ".$db_mapping['latitude'].")') WHERE `mls_listing_id`='{$db_mapping['mls_listing_id']}'";	
+					        $coord_q = $this->dbh->prepare($coord_sql);
+					        $attemt_coord_addition = $coord_q->execute();
 
 			                //Logs
 	                		$checkPropertyResult = $count. ':SFR Property UPDATE Success: '.$db_mapping['mls_listing_id']."\n";

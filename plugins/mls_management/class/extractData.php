@@ -3,7 +3,7 @@ ini_set("memory_limit","10012M");
 ini_set("auto_detect_line_endings", true);
 define('MLSDATAPATH','data/mlsdata/');
 
-class extractData extends mlsData
+class extractData extends mlsManagement
 {
 	public function zipCheck($server_file, $local_file, $target_file, $ftp_user_name, $ftp_user_pass, $ftp_server)
 	{

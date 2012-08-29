@@ -1,0 +1,36 @@
+.tabSelected {
+	background: #F9F9F9 !important;
+	color: #182227 !important;
+}
+.hidden_box {
+	display:none;
+	padding:10px;
+	background-color:#f6f6f6;
+	margin:10px;
+}
+.mls_span {
+	color:inherit;
+	font-size:inherit;
+	line-height:inherit;
+}
+.mls_input {
+	display:none;
+	width:150px;
+}
+.mls_management #maincontent {
+	width:100% !important;
+}
+.mls_management #sidebar {
+	display:none;
+}
+.mls_management table {
+	width:100% !important;
+}
+.mls_settings h4 {
+	width:918px !important;
+	font-size: 16px;
+	font-weight: normal;
+	font-family: Georgia, Times, Times New Roman, serif;
+	color: #CF3805;
+	margin-bottom:10px !important;
+}

@@ -1,11 +1,5 @@
 <?php
-
-/**
- * CRUD controller for MLS data sources.
- * 
- * TODO Needs documentation. 
- */
-class mlsData
+class mlsManagement
 {
 	/** 
 	* A public variable 
@@ -30,6 +24,30 @@ class mlsData
 		if(!file_exists(MLSFOLDER))
 		{
 			mkdir(MLSFOLDER);
+		}
+	}
+
+	/** 
+	* Connects to database
+	* 
+	* @param string $hostname the hostname for the database 
+	* @param string $username database username 
+	* @param string $password database password 
+	* @param string $db_name database name 
+	* @return object the database connection
+	*/  
+	public function connectDB($db_host, $db_name, $db_user, $db_pass)
+	{
+		try 
+		{
+			$this->dbh = new PDO("mysql:host=$db_host;dbname=$db_name", $db_user, $db_pass);
+			$this->dbh->setAttribute( PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION );  
+			/*** return database handle ***/
+			return $this->dbh;
+		}
+		catch(PDOException $e)
+		{
+			echo '<div class="error">'.$e->getMessage().'</div>';
 		}
 	}
 
@@ -78,7 +96,7 @@ class mlsData
 			$parent_nodes_node = $xml->addChild($key);
 				$parent_nodes_node->addCData($value);
 		}
-		$fileName = to7bit($post_data['mlsname'], "UTF-8");
+		$fileName = to7bit($post_data['mlscode'], "UTF-8");
 		$fileName = MLSFOLDER . clean_url($fileName) . '.xml';
 		if(XMLsave($xml, $fileName))
 		{
@@ -185,7 +203,7 @@ class mlsData
 		}
 	}
 
-	public function getAllMLS($mls_name=null)
+	public function getAllMLS($mls_id=null)
 	{
 		$all_mls = glob(MLSFOLDER . "/*.xml");
 		$mls_info = array();
@@ -196,9 +214,10 @@ class mlsData
 			foreach($all_mls as $mls)
 			{
 				$data = getXML($mls);
-				if($mls_name != null && $mls_name == $data->mlsname)
+				if($mls_id != null && $mls_id == $data->mlscode)
 				{
 					$mls_info['mlsname'] = (string) $data->mlsname;
+					$mls_info['mlscode'] = (string) $data->mlscode;
 					$mls_info['retsurl'] = (string) $data->retsurl;
 					$mls_info['retsuser'] = (string) $data->retsuser;
 					$mls_info['retspass'] = (string) $data->retspass;
@@ -208,9 +227,10 @@ class mlsData
 					$mls_info['retsoffset'] = (string) $data->retsoffset;
 					$mls_info['retsprofile'] = (string) $data->retsprofile;
 				}
-				elseif($mls_name == null)
+				elseif($mls_id == null)
 				{
 					$mls_info[$count]['mlsname'] = (string) $data->mlsname;
+					$mls_info[$count]['mlscode'] = (string) $data->mlscode;
 					$mls_info[$count]['retsurl'] = (string) $data->retsurl;
 					$mls_info[$count]['retsuser'] = (string) $data->retsuser;
 					$mls_info[$count]['retspass'] = (string) $data->retspass;
@@ -260,4 +280,3 @@ class mlsData
 		fclose($fh);
 	}
 }
-?>
