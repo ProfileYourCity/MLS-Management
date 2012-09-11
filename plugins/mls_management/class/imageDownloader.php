@@ -87,16 +87,13 @@ class imageDownloader extends mlsManagement
 				$stmt = $this->dbh->prepare($sql);
 				$stmt->execute();
 				$results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+				$count = 0;
+				$mls_listing_ids = array();
 				foreach ($results as $result) 
 				{
-					if(empty($result['listing_rid']))
-					{
-						$mls_listing_ids[] = $result['mls_listing_id'];
-					}
-					else
-					{
-						$mls_listing_ids[] = $result['listing_rid'];
-					}
+					$mls_listing_ids[$count]['mls_listing_id'] = $result['mls_listing_id'];
+					$mls_listing_ids[$count]['listing_rid'] = $result['listing_rid'];
+					$count++;
 				}
 				if(is_array($mls_listing_ids))
 				{
@@ -130,7 +127,8 @@ class imageDownloader extends mlsManagement
         	$countImages = 0;
         	foreach($properties as $property)
         	{
-        		$imageData[$countImages] = $rets->GetObject("Property", "Photo", $property);
+        		$listing_id = (isset($property['listing_rid']) && empty($property['listing_rid'])) ? $property['mls_listing_id'] : $property['listing_rid'];
+        		$imageData[$property['mls_listing_id']] = $rets->GetObject("Property", "Photo", $listing_id);
         		$countImages++;
         	}
         	if(is_array($imageData))
@@ -155,13 +153,20 @@ class imageDownloader extends mlsManagement
      * @param string $table the table (property type) to select from
      * 
      */
-	public function saveImageData($photo, $mls_id, $table)
+	public function saveImageData($photo, $mls_id, $table, $listing_id=null)
 	{
 		//$path = $this->imagePath.$mls_id.'/'.$table."/";
 		$path = $this->imagePath.$mls_id.'/';
 		if(!empty($photo['Content-ID']))
 		{
-			$listing = $photo['Content-ID'];
+			if(is_null($listing_id))
+			{
+				$listing = $photo['Content-ID'];
+			}
+			else
+			{
+				$listing = $listing_id;
+			}
 			$number = $photo['Object-ID'];
 			if ($number == 1) 
 			{

@@ -253,23 +253,30 @@ class mlsManagement
 	* @param bool $echo if true echo data instead of return
     * @return string the result of node request
     */  
-	public function getData($field, $echo=false)
+	public function getData($field=null, $echo=false)
 	{
 		$mls_data = getXML(MLSMANAGEMENTFILE);
-		if(is_object($mls_data->field))
-		{	
-			if($echo != false)
-			{
-				echo $mls_data->$field;
+		if(!is_null($field))
+		{
+			if(is_object($mls_data->field))
+			{	
+				if($echo != false)
+				{
+					echo $mls_data->$field;
+				}
+				else
+				{
+					return $mls_data->$field;
+				}
 			}
 			else
 			{
-				return $mls_data->$field;
+				return false;
 			}
 		}
 		else
 		{
-			return false;
+			return (array) $mls_data;
 		}
 	}
 

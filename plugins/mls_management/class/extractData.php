@@ -210,5 +210,10 @@ class extractData extends mlsManagement
 		$columns = rtrim($columns, ",");
 		return $columns;
 	}
+
+	public function checkDateDifferance($date_1, $date_2)
+	{
+		  return round(abs(strtotime($date_1)-strtotime($date_2))/86400);
+	}
 }
 ?>

@@ -71,18 +71,19 @@ class rapattoniRets extends extractData
 
 		//Get the "Update Increment" from mls management settings file & Query RETS server for properties that have been modified in the past x days
 		$select_date = (int) $this->getData('mlsImg_increm_update_days_ago');
-        $query_date = date ('Y-m-j', strtotime('-'.$select_date.' day', strtotime(date("Y-m-j"))));
+        $query_date = date ('Y-m-d', strtotime('-'.$select_date.' day', strtotime(date("Y-m-j"))));
+        echo $query_date;
 		if(is_null($mls_num))
 		{
-       		//$query = "(MLNumber=0+),(LastModifiedDateTime={$query_date}T03:28:04+)";
        		$query = "(MLNumber=0+)";
+       		//$query = "(MLNumber=0+),(LastModifiedDateTime={$query_date}T03:28:04+)";
        	}
 		else
 		{
        		$query = "(MLNumber={$mls_num})";
        	}
 
-		$search = $rets->SearchQuery("Property", "RESI", $query, array("Select" => "State,MLNumber,ListingRid,ListingOfficeMLSID,ListingOfficeName,ListingOfficeNumber,ListingAgentMLSID,ListingAgentFullName,ListingAgentNumber,EntryDate,PropertyType,RESICOMT,Style,RESIREST,RESIPETS,RESIPARK,RESILOTD,RESICONS,RESIBWAC,MarketingRemarks,Status,RESIFREO,RESISSLE,ListingPrice,RESIZONE,RESIWTRD,RESIWATR,RESIVIEW,StreetNumber,StreetName,StreetSuffix,StreetPostDirection,Unit,Longitude,Latitude,City,ZipCode,Region,County,Subdivision,Area,YearBuilt,Acres,SquareFootage,PricePerSquareFoot,Bedrooms,Bathrooms,RESIHOAF,RESIHOD,LegalDescription,APN,RESITXYR,Section,Township,MasterBedroomDim,SecondBedroomDim,ThirdBedroomDim,FourthBedroomDim,FifthBedroomDim,KitchenDim,DenDim,DiningRoomDim,FamilyRoomDim,LivingRoomDim,GreatRoomDim,RESIINTF,VirtualTourURL,PictureCount,PictureModifiedDateTime,VOWAutomatedValuationDisplay,VOWConsumerComment,RESIHOFA,RESIFINI,ShowAddressToPublic,RESIPVSP,RESINGAR,RESIGARA,LastModifiedDateTime,RESITOTF,RESIKITC,RESIPVPL,RESIPOLD,RESIFLOR,RESIROOF,RESIAMEN,RESIINTF,RESIEXTF,RESIHEAT,RESICOOL,RESIDENN,RESIWIND", "Limit" => $rets_offset, "Offset" => $offset));
+		$search = $rets->SearchQuery("Property", "RESI", $query, array("Select" => "State,MLNumber,ListingRid,ListingOfficeMLSID,ListingOfficeName,ListingOfficeNumber,ListingAgentMLSID,ListingAgentFullName,ListingAgentNumber,EntryDate,PropertyType,RESICOMT,Style,RESIREST,RESIPETS,RESIPARK,RESILOTD,RESICONS,RESIBWAC,MarketingRemarks,Status,RESIFREO,RESISSLE,ListingPrice,RESIZONE,RESIWTRD,RESIWATR,RESIVIEW,StreetNumber,StreetName,StreetSuffix,StreetPostDirection,Unit,Longitude,Latitude,City,ZipCode,Region,County,Subdivision,Area,YearBuilt,Acres,SquareFootage,PricePerSquareFoot,Bedrooms,Bathrooms,RESIHOAF,RESIHOD,LegalDescription,APN,RESITXYR,Section,Township,MasterBedroomDim,SecondBedroomDim,ThirdBedroomDim,FourthBedroomDim,FifthBedroomDim,KitchenDim,DenDim,DiningRoomDim,FamilyRoomDim,LivingRoomDim,GreatRoomDim,RESIINTF,VirtualTourURL,PictureCount,PictureModifiedDateTime,VOWAutomatedValuationDisplay,VOWConsumerComment,RESIHOFA,RESIFINI,ShowAddressToPublic,RESIPVSP,RESINGAR,RESIGARA,LastModifiedDateTime,RESITOTF,RESIKITC,RESIPVPL,RESIPOLD,RESIFLOR,RESIROOF,RESIAMEN,RESIINTF,RESIEXTF,RESIHEAT,RESICOOL,RESIDENN,RESIWIND,EntryDate,HalfBathrooms,PropertySubtype1", "Limit" => $rets_offset, "Offset" => $offset));
 		if($search)
 		{
 			$count = 0;
@@ -107,7 +108,7 @@ class rapattoniRets extends extractData
 					'listing_date' => $listing['EntryDate'], 
 					'property_type_code' => $listing['PropertyType'], 
 					'community_type' => $listing['RESICOMT'], 
-					'building_design' => '', 
+					'building_design' => $listing['PropertySubtype1'], 
 					'building_desc' => $listing['Style'], 
 					'security' => '', 
 					'restrictions' => $listing['RESIREST'], 
@@ -124,7 +125,7 @@ class rapattoniRets extends extractData
 					'sale_price' => $listing['ListingPrice'], 
 					'original_price' => '', 
 					'sold_price' => '', 
-					'days_on_market' => '', 
+					'days_on_market' => $listing['EntryDate'], 
 					'zoning_code' => $listing['RESIZONE'], 
 					'water_front_desc' => $listing['RESIWTRD'], 
 					'water' => $listing['RESIWATR'], 
@@ -150,7 +151,7 @@ class rapattoniRets extends extractData
 					'price_per_sqft' => $listing['PricePerSquareFoot'], 
 					'bedrooms' => $listing['Bedrooms'], 
 					'baths_full' => $listing['Bathrooms'], 
-					'baths_half' => '', 
+					'baths_half' => $listing['HalfBathrooms'], 
 					'total_rooms' => '', 
 					'school_elementary' => '', 
 					'school_middle' => '', 
@@ -209,6 +210,33 @@ class rapattoniRets extends extractData
        				//echo 'DATA<pre>'.print_r($db_mapping,true).'</pre>';
 	                try
 	                {
+	                	$current_date = date("Y-m-d H:i:s");
+	                	$db_mapping['days_on_market'] = $this->checkDateDifferance($db_mapping['days_on_market'], $current_date);
+
+	                	if($db_mapping['property_type_code'] == 'Residential')
+	                	{
+	                		$db_mapping['property_type_code'] = 'Single Family';
+	                	}
+	                	if($db_mapping['building_design'] == 'High Rise (8+)')
+	                	{
+	                		$db_mapping['building_design'] = 'High Rise (8 or more)';
+	                		$db_mapping['property_type_code'] = 'Condo';
+	                	}
+	                	elseif($db_mapping['building_design'] == 'Low Rise (1-3)')
+	                	{
+	                		$db_mapping['building_design'] = 'Low Rise (1-3 Floors)';
+	                		$db_mapping['property_type_code'] = 'Condo';
+	                	}
+	                	elseif($db_mapping['building_design'] == 'Mid Rise (4-7)')
+	                	{
+	                		$db_mapping['building_design'] = 'Mid Rise (4-7 Floors)';
+	                		$db_mapping['property_type_code'] = 'Condo';
+	                	}
+	                	elseif($db_mapping['building_design'] == 'Villa Attch/Half Dup')
+	                	{
+	                		$db_mapping['building_design'] = 'Villa Attached';
+	                	}
+
                        $db_mapping['listing_date'] = $this->RETSdatetimeToMySQL($db_mapping['listing_date']);
 	                   if((strpos($db_mapping['zip_code'], '-') !== false))
 	                   {

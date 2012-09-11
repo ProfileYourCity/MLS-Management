@@ -573,21 +573,21 @@ function update_single_property_image($mls_num, $mls_id, $table)
 	$mlsManagement = new mlsManagement;
 	$imageDownloader = new imageDownloader;
 	$mlsInfo = $mlsManagement->getAllMLS($mls_id);
-	if($mls_id == '116')
-	{
-		$mlsManagement->dbh = $mlsManagement->connectDB($mlsManagement->getData("dbhost"), $mlsInfo['mlsdatabase'], $mlsManagement->getData("dbuser"), $mlsManagement->getData("dbpass"));
-		$sql = "SELECT listing_rid FROM {$table} WHERE `mls_listing_id` = {$mls_num}";
-		$stmt = $mlsManagement->dbh->prepare($sql);
-		$stmt->execute();
-		$results = $stmt->fetch();
-		$mls_num = $results['listing_rid'];
-	}
-	$images = $imageDownloader->getImageData($mlsInfo, array($mls_num));
+	$listing_id = $mls_num;
+
+	$mlsManagement->dbh = $mlsManagement->connectDB($mlsManagement->getData("dbhost"), $mlsInfo['mlsdatabase'], $mlsManagement->getData("dbuser"), $mlsManagement->getData("dbpass"));
+	$sql = "SELECT mls_listing_id, listing_rid FROM {$table} WHERE `mls_listing_id` = {$mls_num}";
+	$stmt = $mlsManagement->dbh->prepare($sql);
+	$stmt->execute();
+	$results = $stmt->fetch();
+	$listing_ids = array(0 => array('mls_listing_id' => $results['mls_listing_id'], 'listing_rid' => $results['listing_rid']));
+
+	$images = $imageDownloader->getImageData($mlsInfo,$listing_ids);
 	foreach($images as $image)
 	{
 		foreach($image as $ind_image)
 		{
-			$imageResult[] = $imageDownloader->saveImageData($ind_image, $mls_id, $table);
+			$imageResult[] = $imageDownloader->saveImageData($ind_image, $mls_id, $table, $listing_id);
 		}
 	}
 	if($imageResult != false)
@@ -671,11 +671,11 @@ function downloadAllImages($mls_id, $table, $limit, $offset, $cron, $password)
 
 	//Get Image Data For Each Property
 	$images = $imageDownloader->getImageData($mlsInfo, $properties);
-	foreach($images as $image)
+	foreach($images as $property_id => $property_images)
 	{
-		foreach($image as $ind_image)
+		foreach($property_images as $ind_image)
 		{
-			$imageResult[] = $imageDownloader->saveImageData($ind_image, $mls_id, $table);
+			$imageResult[] = $imageDownloader->saveImageData($ind_image, $mls_id, $table, $property_id);
 		}
 	}
 

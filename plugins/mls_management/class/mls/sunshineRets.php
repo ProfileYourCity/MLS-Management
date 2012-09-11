@@ -66,7 +66,7 @@ class sunshineRets extends extractData
 
 		//Get the "Update Increment" from mls management settings file & Query RETS server for properties that have been modified in the past x days
 		$select_date = (int) $this->getData('mlsImg_increm_update_days_ago');
-        $query_date = date ('Y-m-j', strtotime('-'.$select_date.' day', strtotime(date("Y-m-j"))));
+        $query_date = date ('Y-m-d', strtotime('-'.$select_date.' day', strtotime(date("Y-m-d"))));
 		if(is_null($mls_num))
 		{
         	$query = "(datelasttransaction={$query_date}+)";
@@ -315,7 +315,7 @@ class sunshineRets extends extractData
 
 		//Get the "Update Increment" from mls management settings file & Query RETS server for properties that have been modified in the past x days
 		$select_date = (int) $this->getData('mlsImg_increm_update_days_ago');
-        $query_date = date ('Y-m-j', strtotime('-'.$select_date.' day', strtotime(date("Y-m-j"))));
+        $query_date = date ('Y-m-d', strtotime('-'.$select_date.' day', strtotime(date("Y-m-d"))));
 		if(is_null($mls_num))
 		{
         	$query = "(datelasttransaction={$query_date}+)";
